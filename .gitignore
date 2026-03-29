@@ -18,7 +18,11 @@ Packages/
 *.ipa
 *.dSYM.zip
 *.dSYM
+*.dmg
 test.txt
+
+# Build scripts output
+build-release/
 
 # Claude Code
 .claude/
