@@ -27,6 +27,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillTerminate(_ notification: Notification) {
         sessionStore.saveSessions()
         UserDefaults.standard.synchronize()
+        if let monitor = hotkeyMonitor {
+            NSEvent.removeMonitor(monitor)
+            hotkeyMonitor = nil
+        }
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -36,8 +40,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             setupNotchWindow()
         }
         setupHotkey()
-        // Detect in background so launch isn't blocked
-        sessionStore.detectAllXcodeProjectsAsync()
     }
 
     private func setupStatusItem() {
@@ -103,7 +105,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         showPanelBelowNotch()
         panelOpenedViaHover = true
         startHoverTracking()
-        sessionStore.detectAndSwitchAsync()
     }
 
     private func showPanelBelowNotch() {
@@ -188,11 +189,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             stopHoverTracking()
         } else {
             panelOpenedViaHover = false
-            // Show panel immediately
             showPanelBelowStatusItem()
-
-            // Then detect projects in background
-            sessionStore.detectAndSwitchAsync()
         }
     }
 

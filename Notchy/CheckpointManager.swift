@@ -1,4 +1,7 @@
 import Foundation
+import os
+
+private let logger = Logger(subsystem: "com.notchly", category: "CheckpointManager")
 
 struct Checkpoint: Identifiable {
     let id: String          // full ref name
@@ -35,10 +38,20 @@ class CheckpointManager {
         return f
     }()
 
+    private lazy var gitPath: String = {
+        let candidates = ["/usr/bin/git", "/usr/local/bin/git", "/opt/homebrew/bin/git"]
+        for path in candidates {
+            if FileManager.default.isExecutableFile(atPath: path) {
+                return path
+            }
+        }
+        return "/usr/bin/git"
+    }()
+
     @discardableResult
     private func git(_ args: [String], in directory: String, environment: [String: String]? = nil) throws -> String {
         let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/git")
+        process.executableURL = URL(fileURLWithPath: gitPath)
         process.arguments = args
         process.currentDirectoryURL = URL(fileURLWithPath: directory)
         if let environment {
@@ -75,7 +88,13 @@ class CheckpointManager {
 
         // Use a temporary index file to avoid disturbing the user's staged changes
         let tempIndex = NSTemporaryDirectory() + "Notchy-index-\(UUID().uuidString)"
-        defer { try? FileManager.default.removeItem(atPath: tempIndex) }
+        defer {
+            do {
+                try FileManager.default.removeItem(atPath: tempIndex)
+            } catch {
+                logger.warning("Failed to clean up temp index: \(error.localizedDescription)")
+            }
+        }
 
         let env = ["GIT_INDEX_FILE": tempIndex]
 
@@ -127,7 +146,11 @@ class CheckpointManager {
     func clearCheckpoints(for projectName: String, in projectDirectory: String) {
         let list = checkpoints(for: projectName, in: projectDirectory)
         for checkpoint in list {
-            try? git(["update-ref", "-d", checkpoint.id], in: projectDirectory)
+            do {
+                try git(["update-ref", "-d", checkpoint.id], in: projectDirectory)
+            } catch {
+                logger.warning("Failed to delete checkpoint ref \(checkpoint.id): \(error.localizedDescription)")
+            }
         }
     }
 }

@@ -41,7 +41,6 @@ struct PanelContentView: View {
     }
 
     /// When expanded + unfocused, make chrome backgrounds semi-transparent
-    /// so the user can see through to things like Xcode build status.
     private var chromeBackgroundOpacity: Double {
         (!sessionStore.isWindowFocused && sessionStore.isTerminalExpanded) ? 0.5 : 1.0
     }
@@ -193,24 +192,6 @@ struct PanelContentView: View {
                             generation: session.generation,
                             sessionStore: sessionStore
                         )
-                    } else if session.projectPath != nil && !sessionStore.activeXcodeProjects.contains(session.projectName) {
-                        // Xcode closed for this project
-                        placeholderView("Xcode project not open")
-                            .overlay {
-                                if let projectPath = session.projectPath {
-                                    Button("Open in Xcode") {
-                                        NSWorkspace.shared.open(URL(fileURLWithPath: projectPath))
-                                    }
-                                    .buttonStyle(.plain)
-                                    .font(.system(size: 12, weight: .medium))
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 6)
-                                    .background(Color.white.opacity(0.15))
-                                    .clipShape(RoundedRectangle(cornerRadius: 6))
-                                    .padding(.top, 28)
-                                }
-                            }
                     } else {
                         placeholderView("Click a project tab to start a terminal session")
                             .onTapGesture {
@@ -218,7 +199,7 @@ struct PanelContentView: View {
                             }
                     }
                 } else if sessionStore.sessions.isEmpty {
-                    placeholderView("No Xcode projects detected.\nClick + to create a new session.")
+                    placeholderView("No sessions.\nClick + to create a new session.")
                 } else {
                     placeholderView("Select a project to begin")
                 }
@@ -229,11 +210,6 @@ struct PanelContentView: View {
         .clipShape(UnevenRoundedRectangle(topLeadingRadius: 8.5, bottomLeadingRadius: 9.5, bottomTrailingRadius: 9.5, topTrailingRadius: 8.5))
         .onAppear {
             sessionStore.refreshLastCheckpoint()
-        }
-        .onChange(of: sessionStore.hasCompletedInitialDetection) {
-            if sessionStore.hasCompletedInitialDetection && sessionStore.sessions.isEmpty {
-                sessionStore.createQuickSession()
-            }
         }
         .onChange(of: sessionStore.activeSessionId) {
             sessionStore.refreshLastCheckpoint()

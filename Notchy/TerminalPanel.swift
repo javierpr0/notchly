@@ -172,7 +172,6 @@ class TerminalPanel: NSPanel {
     }
 
     @objc private func windowDidBecomeKey(_ notification: Notification) {
-        sessionStore.panelDidBecomeKey()
         updateOpacity()
     }
 
@@ -260,6 +259,10 @@ class TerminalPanel: NSPanel {
             }
         }
         return super.performKeyEquivalent(with: event)
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 
     override var canBecomeKey: Bool { true }

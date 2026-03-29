@@ -41,7 +41,7 @@ class ClickThroughTerminalView: LocalProcessTerminalView {
                   eventWindow === self.window else { return event }
             let locationInView = self.convert(event.locationInWindow, from: nil)
             if self.bounds.contains(locationInView) {
-                DispatchQueue.main.async {
+                Task { @MainActor in
                     SessionStore.shared.focusPane(id)
                 }
             }
@@ -152,7 +152,7 @@ class ClickThroughTerminalView: LocalProcessTerminalView {
             dataReceivedCount += 1
             if dataReceivedCount >= 4 {
                 isInitializing = false
-                DispatchQueue.main.async {
+                Task { @MainActor in
                     self.alphaValue = 1
                 }
             }
@@ -188,7 +188,7 @@ class ClickThroughTerminalView: LocalProcessTerminalView {
             newStatus = .idle
         }
 
-        DispatchQueue.main.async {
+        Task { @MainActor in
             SessionStore.shared.updateTerminalStatus(id, status: newStatus)
         }
     }
@@ -286,7 +286,7 @@ class TerminalManager: NSObject, LocalProcessTerminalViewDelegate {
         } else {
             path = dir
         }
-        DispatchQueue.main.async {
+        Task { @MainActor in
             SessionStore.shared.updateWorkingDirectory(sessionId, directory: path)
         }
     }

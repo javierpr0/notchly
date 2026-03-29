@@ -140,10 +140,6 @@ class NotchWindow: NSPanel {
                 }
             }
         }
-        // Also poll on a timer to catch status changes from the observation timer
-        Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { [weak self] _ in
-            self?.updateExpansionState()
-        }
     }
 
     private func updateExpansionState() {

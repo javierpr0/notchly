@@ -22,7 +22,7 @@ struct SessionTabBar: View {
                 SessionTab(
                     session: session,
                     isActive: session.id == sessionStore.activeSessionId,
-                    terminalActive: session.hasStarted && sessionStore.activeXcodeProjects.contains(session.projectName),
+                    terminalActive: session.hasStarted,
                     terminalStatus: session.terminalStatus,
                     foregroundOpacity: sessionStore.isWindowFocused ? 1.0 : 0.6,
                     canMoveLeft: (index ?? 0) > 0,

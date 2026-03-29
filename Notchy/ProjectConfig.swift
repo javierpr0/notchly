@@ -1,4 +1,7 @@
 import Foundation
+import os
+
+private let logger = Logger(subsystem: "com.notchly", category: "ProjectConfig")
 
 /// Per-project configuration loaded from `.notchy.json` in the project root.
 ///
@@ -21,6 +24,11 @@ struct ProjectConfig: Codable {
     static func load(from directory: String) -> ProjectConfig? {
         let path = (directory as NSString).appendingPathComponent(".notchy.json")
         guard let data = FileManager.default.contents(atPath: path) else { return nil }
-        return try? JSONDecoder().decode(ProjectConfig.self, from: data)
+        do {
+            return try JSONDecoder().decode(ProjectConfig.self, from: data)
+        } catch {
+            logger.error("Failed to decode .notchy.json: \(error.localizedDescription)")
+            return nil
+        }
     }
 }

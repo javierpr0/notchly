@@ -5,6 +5,8 @@ struct BotFaceView: View {
 
     @State private var eyeOffset: CGFloat = 0
     @State private var isBlinking = false
+    @State private var lookAroundTask: Task<Void, Never>?
+    @State private var blinkTask: Task<Void, Never>?
 
     var body: some View {
         GeometryReader { geo in
@@ -98,6 +100,10 @@ struct BotFaceView: View {
             updateAnimations()
             startBlinkLoop()
         }
+        .onDisappear {
+            lookAroundTask?.cancel()
+            blinkTask?.cancel()
+        }
     }
 
     private var cheekOpacity: Double {
@@ -113,6 +119,9 @@ struct BotFaceView: View {
     }
 
     private func updateAnimations() {
+        lookAroundTask?.cancel()
+        lookAroundTask = nil
+
         withAnimation(.easeInOut(duration: 0.2)) {
             eyeOffset = 0
         }
@@ -123,39 +132,33 @@ struct BotFaceView: View {
     }
 
     private func startLookAround() {
-        guard state == .working else { return }
-        withAnimation(.easeInOut(duration: 0.6)) {
-            eyeOffset = 2.0
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-            guard self.state == .working else { return }
-            withAnimation(.easeInOut(duration: 0.6)) {
-                self.eyeOffset = -2.0
+        lookAroundTask?.cancel()
+        lookAroundTask = Task { @MainActor in
+            while !Task.isCancelled && state == .working {
+                withAnimation(.easeInOut(duration: 0.6)) { eyeOffset = 2.0 }
+                try? await Task.sleep(for: .seconds(0.8))
+                guard !Task.isCancelled && state == .working else { break }
+                withAnimation(.easeInOut(duration: 0.6)) { eyeOffset = -2.0 }
+                try? await Task.sleep(for: .seconds(0.8))
+                guard !Task.isCancelled && state == .working else { break }
+                withAnimation(.easeInOut(duration: 0.4)) { eyeOffset = 0 }
+                try? await Task.sleep(for: .seconds(0.8))
             }
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
-            guard self.state == .working else { return }
-            withAnimation(.easeInOut(duration: 0.4)) {
-                self.eyeOffset = 0
-            }
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.4) {
-            self.startLookAround()
         }
     }
 
     private func startBlinkLoop() {
-        let delay = Double.random(in: 3.0...6.0)
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-            withAnimation(.easeInOut(duration: 0.08)) {
-                self.isBlinking = true
+        blinkTask?.cancel()
+        blinkTask = Task { @MainActor in
+            while !Task.isCancelled {
+                let delay = Double.random(in: 3.0...6.0)
+                try? await Task.sleep(for: .seconds(delay))
+                guard !Task.isCancelled else { break }
+                withAnimation(.easeInOut(duration: 0.08)) { isBlinking = true }
+                try? await Task.sleep(for: .seconds(0.12))
+                guard !Task.isCancelled else { break }
+                withAnimation(.easeInOut(duration: 0.08)) { isBlinking = false }
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
-                withAnimation(.easeInOut(duration: 0.08)) {
-                    self.isBlinking = false
-                }
-            }
-            self.startBlinkLoop()
         }
     }
 }
