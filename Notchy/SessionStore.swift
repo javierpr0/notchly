@@ -496,6 +496,16 @@ class SessionStore {
 
     // MARK: - Split Pane Operations
 
+    func updateSplitRatio(_ splitId: UUID, ratio: CGFloat) {
+        guard let index = sessions.firstIndex(where: { $0.splitRoot.containsPane(splitId) || $0.splitRoot.id == splitId }) else { return }
+        let clamped = max(0.2, min(0.8, ratio))
+        sessions[index].splitRoot = sessions[index].splitRoot.updatingRatio(splitId, to: clamped)
+    }
+
+    func persistSplitRatio() {
+        persistSessions()
+    }
+
     func splitFocusedPane(direction: SplitDirection) {
         guard let index = sessions.firstIndex(where: { $0.id == activeSessionId }) else { return }
         let paneId = sessions[index].focusedPaneId

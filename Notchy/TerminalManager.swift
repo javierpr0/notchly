@@ -233,13 +233,13 @@ class TerminalManager: NSObject, LocalProcessTerminalViewDelegate {
         terminal.sessionId = sessionId
         terminal.processDelegate = self
 
-        // Match macOS Terminal default font size
         terminal.font = NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)
         terminal.nativeBackgroundColor = NSColor(white: 0.1, alpha: 1.0)
         terminal.nativeForegroundColor = NSColor(white: 0.9, alpha: 1.0)
 
-        let shell = ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh"
-        let environment = buildEnvironment()
+        let config = ProjectConfig.load(from: workingDirectory)
+        let shell = config?.shell ?? ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh"
+        let environment = buildEnvironment(extra: config?.env)
 
         terminal.startProcess(
             executable: shell,
@@ -252,13 +252,17 @@ class TerminalManager: NSObject, LocalProcessTerminalViewDelegate {
         terminal.alphaValue = 0
         terminal.isInitializing = true
 
-        // cd to working directory, launch claude only if CLAUDE.md exists
         let escapedDir = shellEscape(workingDirectory)
-        let hasClaude = launchClaude && FileManager.default.fileExists(atPath: (workingDirectory as NSString).appendingPathComponent("CLAUDE.md"))
-        if hasClaude {
-            terminal.send(txt: "cd \(escapedDir) && clear && claude\r")
+        if let command = config?.command {
+            let escapedCmd = command
+            terminal.send(txt: "cd \(escapedDir) && clear && \(escapedCmd)\r")
         } else {
-            terminal.send(txt: "cd \(escapedDir) && clear\r")
+            let hasClaude = launchClaude && FileManager.default.fileExists(atPath: (workingDirectory as NSString).appendingPathComponent("CLAUDE.md"))
+            if hasClaude {
+                terminal.send(txt: "cd \(escapedDir) && clear && claude\r")
+            } else {
+                terminal.send(txt: "cd \(escapedDir) && clear\r")
+            }
         }
 
         terminals[sessionId] = terminal
@@ -304,13 +308,16 @@ class TerminalManager: NSObject, LocalProcessTerminalViewDelegate {
         terminals.removeValue(forKey: sessionId)
     }
 
-    private func buildEnvironment() -> [String] {
+    private func buildEnvironment(extra: [String: String]? = nil) -> [String] {
         var env = ProcessInfo.processInfo.environment
         env["TERM"] = "xterm-256color"
         env["LANG"] = env["LANG"] ?? "en_US.UTF-8"
-        // Enable OSC 7 directory reporting — macOS /etc/zshrc only sends it
-        // when TERM_PROGRAM is "Apple_Terminal"
         env["TERM_PROGRAM"] = "Apple_Terminal"
+        if let extra {
+            for (key, value) in extra {
+                env[key] = value
+            }
+        }
         return env.map { "\($0.key)=\($0.value)" }
     }
 

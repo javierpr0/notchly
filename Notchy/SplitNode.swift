@@ -111,6 +111,20 @@ indirect enum SplitNode: Codable, Identifiable, Equatable {
         }
     }
 
+    func updatingRatio(_ splitId: UUID, to ratio: CGFloat) -> SplitNode {
+        switch self {
+        case .pane: return self
+        case .split(let id, let direction, let first, let second, let r):
+            if id == splitId {
+                return .split(id: id, direction: direction, first: first, second: second, ratio: ratio)
+            }
+            return .split(id: id, direction: direction,
+                          first: first.updatingRatio(splitId, to: ratio),
+                          second: second.updatingRatio(splitId, to: ratio),
+                          ratio: r)
+        }
+    }
+
     /// Next pane ID after the given one (wraps around)
     func nextPaneId(after paneId: UUID) -> UUID? {
         let ids = allPaneIds
