@@ -76,31 +76,35 @@ class TerminalPanel: NSPanel {
             name: .NotchyExpandPanel,
             object: nil
         )
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleDidResize),
+            name: NSWindow.didResizeNotification,
+            object: self
+        )
     }
 
-    override func setFrame(_ frameRect: NSRect, display displayFlag: Bool, animate animateFlag: Bool) {
-        var adjusted = frameRect
+    private var lastKnownWidth: CGFloat = 0
 
-        // Center horizontally when width changes (grow equally from both sides)
-        if !isAdjustingFrame && frame.width > 0 && adjusted.width != frame.width {
-            isAdjustingFrame = true
-            let centerX = frame.midX
-            adjusted.origin.x = centerX - adjusted.width / 2
-            if let screen = screen ?? NSScreen.main {
-                let visibleFrame = screen.visibleFrame
-                adjusted.origin.x = max(visibleFrame.minX, adjusted.origin.x)
-                adjusted.origin.x = min(visibleFrame.maxX - adjusted.width, adjusted.origin.x)
-            }
-            super.setFrame(adjusted, display: displayFlag, animate: animateFlag)
-            persistSize()
-            isAdjustingFrame = false
+    @objc private func handleDidResize() {
+        guard !isAdjustingFrame && lastKnownWidth > 0 && frame.width != lastKnownWidth else {
+            lastKnownWidth = frame.width
             return
         }
-
-        super.setFrame(adjusted, display: displayFlag, animate: animateFlag)
-        if !isAdjustingFrame {
-            persistSize()
+        isAdjustingFrame = true
+        let centerX = frame.origin.x + lastKnownWidth / 2
+        var newFrame = frame
+        newFrame.origin.x = centerX - frame.width / 2
+        if let screen = screen ?? NSScreen.main {
+            let visibleFrame = screen.visibleFrame
+            newFrame.origin.x = max(visibleFrame.minX, newFrame.origin.x)
+            newFrame.origin.x = min(visibleFrame.maxX - newFrame.width, newFrame.origin.x)
         }
+        super.setFrameOrigin(newFrame.origin)
+        lastKnownWidth = frame.width
+        isAdjustingFrame = false
+        persistSize()
     }
 
     private func persistSize() {

@@ -1,4 +1,55 @@
 import SwiftUI
+import AppKit
+
+class ResizeCursorNSView: NSView {
+    var isHorizontal = true
+
+    override var intrinsicContentSize: NSSize {
+        // Expand fully in the non-constrained axis
+        isHorizontal ? NSSize(width: NSView.noIntrinsicMetric, height: NSView.noIntrinsicMetric)
+                     : NSSize(width: NSView.noIntrinsicMetric, height: NSView.noIntrinsicMetric)
+    }
+
+    override func resetCursorRects() {
+        discardCursorRects()
+        guard bounds.width > 0 && bounds.height > 0 else { return }
+        let cursor: NSCursor = isHorizontal ? .resizeLeftRight : .resizeUpDown
+        addCursorRect(bounds, cursor: cursor)
+    }
+
+    override func layout() {
+        super.layout()
+        window?.invalidateCursorRects(for: self)
+    }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        window?.invalidateCursorRects(for: self)
+    }
+
+    override func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize)
+        window?.invalidateCursorRects(for: self)
+    }
+
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+}
+
+struct ResizeCursorView: NSViewRepresentable {
+    var isHorizontal: Bool
+
+    func makeNSView(context: Context) -> ResizeCursorNSView {
+        let view = ResizeCursorNSView()
+        view.isHorizontal = isHorizontal
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }
+
+    func updateNSView(_ nsView: ResizeCursorNSView, context: Context) {
+        nsView.isHorizontal = isHorizontal
+        nsView.window?.invalidateCursorRects(for: nsView)
+    }
+}
 
 struct SplitDividerView<First: View, Second: View>: View {
     let splitId: UUID
@@ -9,8 +60,7 @@ struct SplitDividerView<First: View, Second: View>: View {
     @ViewBuilder let second: () -> Second
 
     @State private var isDragging = false
-    private let dividerThickness: CGFloat = 5
-    private let visualThickness: CGFloat = 1
+    private let dividerThickness: CGFloat = 7
 
     var body: some View {
         GeometryReader { geo in
@@ -35,23 +85,12 @@ struct SplitDividerView<First: View, Second: View>: View {
     }
 
     private func dividerHandle(total: CGFloat, isHorizontal: Bool) -> some View {
-        Rectangle()
-            .fill(isDragging ? Color.accentColor.opacity(0.6) : Color(white: 0.25))
+        ResizeCursorView(isHorizontal: isHorizontal)
             .frame(
                 width: isHorizontal ? dividerThickness : nil,
                 height: isHorizontal ? nil : dividerThickness
             )
-            .contentShape(Rectangle())
-            .onHover { hovering in
-                if hovering {
-                    NSCursor(image: NSImage(
-                        systemSymbolName: isHorizontal ? "arrow.left.and.right" : "arrow.up.and.down",
-                        accessibilityDescription: nil
-                    )!, hotSpot: NSPoint(x: 8, y: 8)).push()
-                } else {
-                    NSCursor.pop()
-                }
-            }
+            .background(isDragging ? Color.accentColor.opacity(0.6) : Color(white: 0.25))
             .gesture(
                 DragGesture(minimumDistance: 1)
                     .onChanged { value in

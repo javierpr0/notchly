@@ -26,6 +26,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         sessionStore.saveSessions()
+        UserDefaults.standard.synchronize()
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
