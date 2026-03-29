@@ -1,29 +1,62 @@
-# Notchy
+# Notchly
 
 A macOS menu bar app that puts Claude Code right in your MacBook's notch. Hover over the notch or click the menu bar icon to open a floating terminal panel with embedded sessions that automatically detect your open Xcode projects.
 
-<!-- Add your screenshot here: ![Notchy](screenshot.png) -->
+Based on [Notchy](https://github.com/adamlyttleapps/notchy) by Adam Lyttle.
 
 ## Features
 
 - **Notch integration** — hover over the MacBook notch to reveal the terminal panel
 - **Xcode project detection** — automatically discovers open Xcode projects and `cd`s into them
 - **Multi-session tabs** — run multiple Claude Code sessions side by side
+- **Split panes** — split any terminal horizontally or vertically for side-by-side workflows
+- **Tab reordering** — drag tabs or use Cmd+Shift+Arrow to reorder
 - **Live status in the notch** — animated pill shows whether Claude is working, waiting, or done
 - **Git checkpoints** — Cmd+S to snapshot your project before Claude makes changes
+- **Working directory persistence** — terminals remember where you were across restarts
+- **Native notifications** — macOS alerts when Claude finishes or needs input
+- **Centered resize** — panel grows equally from both sides, size persists across sessions
 
-## Requirements
+## Installation
 
-- macOS 26.0+
-- MacBook with a notch (for notch features; menu bar still works without one)
+### Download
 
-## Building
+Download the latest `Notchy.dmg` from [Releases](https://github.com/javierpr0/notchly/releases).
 
-Open `Notchy.xcodeproj` in Xcode and build (Cmd+B), or from the command line:
+### Important: unsigned app
+
+Notchly is not code-signed with an Apple Developer certificate. On first launch macOS will block it. To allow it:
+
+1. Open the DMG and drag **Notchy.app** to **Applications**
+2. Try to open Notchy — macOS will show "cannot be opened because the developer cannot be verified"
+3. Go to **System Settings → Privacy & Security**
+4. Scroll down — you'll see a message about Notchy being blocked
+5. Click **"Open Anyway"**
+6. Notchy will launch and you won't need to do this again
+
+### Build from source
+
+Requires macOS 26.0+ and Xcode with the macOS 26 SDK.
 
 ```bash
-xcodebuild -project Notchy.xcodeproj -scheme Notchy -configuration Debug build
+xcodebuild -project Notchy.xcodeproj -scheme Notchy -configuration Release build
 ```
+
+Or open `Notchy.xcodeproj` in Xcode and build (Cmd+B).
+
+## Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `` ` `` (backtick) | Toggle panel |
+| Cmd+D | Split pane right |
+| Cmd+Shift+D | Split pane down |
+| Cmd+Shift+W | Close focused pane |
+| Cmd+] / Cmd+[ | Navigate between panes |
+| Cmd+1-9 | Jump to nth tab |
+| Cmd+Shift+Left/Right | Move tab left/right |
+| Cmd+T | New terminal session |
+| Cmd+S | Save checkpoint |
 
 ## Dependencies
 
