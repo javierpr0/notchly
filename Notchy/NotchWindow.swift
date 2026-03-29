@@ -551,18 +551,16 @@ struct NotchPillContent: View {
     var body: some View {
         ZStack {
             HStack {
+                if displayState == .idle {
+                    Spacer()
+                }
 
-                if displayState != .idle {
+                BotFaceView(state: displayState)
+                    .frame(width: 28, height: 20)
 
-                    Rectangle()
-                        .foregroundColor(.clear)
-                        .frame(width: 18, height: 18)
-                        .overlay(alignment: .leading) {
-                            BotFaceView()
-                                .frame(width: 20, height: 15)
-                                .mask(RoundedRectangle(cornerRadius: 5))
-                        }
-
+                if displayState == .idle {
+                    Spacer()
+                } else {
                     Spacer()
 
                     switch displayState {
