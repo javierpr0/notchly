@@ -289,7 +289,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 //        menu.addItem(.separator())
 
         let quitItem = NSMenuItem(
-            title: "Quit Notchy",
+            title: "Quit Notchly",
             action: #selector(NSApplication.terminate(_:)),
             keyEquivalent: "q"
         )

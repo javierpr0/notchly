@@ -2,7 +2,8 @@
 set -euo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-APP_NAME="Notchy"
+PROJECT_NAME="Notchy"
+APP_NAME="Notchly"
 SCHEME="Notchy"
 BUILD_DIR="$PROJECT_DIR/build-release"
 DMG_DIR="$BUILD_DIR/dmg"
@@ -11,7 +12,7 @@ DMG_PATH="$BUILD_DIR/${APP_NAME}.dmg"
 VERSION="${1:-$(date +%Y.%m.%d)}"
 
 echo "==> Building $APP_NAME (Release)..."
-xcodebuild -project "$PROJECT_DIR/$APP_NAME.xcodeproj" \
+xcodebuild -project "$PROJECT_DIR/$PROJECT_NAME.xcodeproj" \
     -scheme "$SCHEME" \
     -configuration Release \
     -derivedDataPath "$BUILD_DIR" \

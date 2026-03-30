@@ -1,7 +1,7 @@
 import Foundation
 import os
 
-private let logger = Logger(subsystem: "com.notchly", category: "ProjectConfig")
+private let logger = Logger(subsystem: "com.emac.notchly", category: "ProjectConfig")
 
 /// Per-project configuration loaded from `.notchy.json` in the project root.
 ///

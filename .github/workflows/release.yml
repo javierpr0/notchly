@@ -32,17 +32,17 @@ jobs:
       - name: Create DMG
         run: |
           mkdir -p dmg-staging
-          cp -R build-release/Build/Products/Release/Notchy.app dmg-staging/
+          cp -R build-release/Build/Products/Release/Notchly.app dmg-staging/
           ln -s /Applications dmg-staging/Applications
-          hdiutil create -volname "Notchy" \
+          hdiutil create -volname "Notchly" \
             -srcfolder dmg-staging \
             -ov -format UDZO \
-            Notchy.dmg
+            Notchly.dmg
 
       - name: Create Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "${{ github.ref_name }}" Notchy.dmg \
-            --title "Notchy ${{ github.ref_name }}" \
+          gh release create "${{ github.ref_name }}" Notchly.dmg \
+            --title "Notchly ${{ github.ref_name }}" \
             --generate-notes

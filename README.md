@@ -1,13 +1,12 @@
 # Notchly
 
-A macOS menu bar app that puts Claude Code right in your MacBook's notch. Hover over the notch or click the menu bar icon to open a floating terminal panel with embedded sessions that automatically detect your open Xcode projects.
+A macOS menu bar app that puts Claude Code right in your MacBook's notch. Hover over the notch or click the menu bar icon to open a floating terminal panel with embedded sessions.
 
 Based on [Notchy](https://github.com/adamlyttleapps/notchy) by Adam Lyttle.
 
 ## Features
 
 - **Notch integration** — hover over the MacBook notch to reveal the terminal panel
-- **Xcode project detection** — automatically discovers open Xcode projects and `cd`s into them
 - **Multi-session tabs** — run multiple Claude Code sessions side by side
 - **Split panes** — split any terminal horizontally or vertically for side-by-side workflows
 - **Tab reordering** — drag tabs or use Cmd+Shift+Arrow to reorder
@@ -16,23 +15,24 @@ Based on [Notchy](https://github.com/adamlyttleapps/notchy) by Adam Lyttle.
 - **Working directory persistence** — terminals remember where you were across restarts
 - **Native notifications** — macOS alerts when Claude finishes or needs input
 - **Centered resize** — panel grows equally from both sides, size persists across sessions
+- **Adjustable font size** — Cmd+/Cmd- to resize terminal text
 
 ## Installation
 
 ### Download
 
-Download the latest `Notchy.dmg` from [Releases](https://github.com/javierpr0/notchly/releases).
+Download the latest `Notchly.dmg` from [Releases](https://github.com/javierpr0/Notchly/releases).
 
 ### Important: unsigned app
 
 Notchly is not code-signed with an Apple Developer certificate. On first launch macOS will block it. To allow it:
 
-1. Open the DMG and drag **Notchy.app** to **Applications**
-2. Try to open Notchy — macOS will show "cannot be opened because the developer cannot be verified"
+1. Open the DMG and drag **Notchly.app** to **Applications**
+2. Try to open Notchly — macOS will show "cannot be opened because the developer cannot be verified"
 3. Go to **System Settings → Privacy & Security**
-4. Scroll down — you'll see a message about Notchy being blocked
+4. Scroll down — you'll see a message about Notchly being blocked
 5. Click **"Open Anyway"**
-6. Notchy will launch and you won't need to do this again
+6. Notchly will launch and you won't need to do this again
 
 ### Build from source
 
@@ -57,6 +57,8 @@ Or open `Notchy.xcodeproj` in Xcode and build (Cmd+B).
 | Cmd+Shift+Left/Right | Move tab left/right |
 | Cmd+T | New terminal session |
 | Cmd+S | Save checkpoint |
+| Cmd+= / Cmd+- | Increase / decrease font |
+| Cmd+0 | Reset font size |
 
 ## Dependencies
 
