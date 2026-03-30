@@ -153,6 +153,7 @@ struct SplitPaneView: View {
     let node: SplitNode
     let launchClaude: Bool
     let generation: Int
+    var customCommand: String? = nil
     @Bindable var sessionStore: SessionStore
 
     private var focusedPaneId: UUID? {
@@ -170,7 +171,8 @@ struct SplitPaneView: View {
                 sessionId: paneId,
                 workingDirectory: workingDirectory,
                 launchClaude: launchClaude,
-                generation: generation
+                generation: generation,
+                customCommand: customCommand
             )
             .overlay(alignment: .topTrailing) {
                 if focusedPaneId == paneId {
@@ -193,9 +195,9 @@ struct SplitPaneView: View {
                 ratio: ratio,
                 sessionStore: sessionStore
             ) {
-                SplitPaneView(node: first, launchClaude: launchClaude, generation: generation, sessionStore: sessionStore)
+                SplitPaneView(node: first, launchClaude: launchClaude, generation: generation, customCommand: customCommand, sessionStore: sessionStore)
             } second: {
-                SplitPaneView(node: second, launchClaude: launchClaude, generation: generation, sessionStore: sessionStore)
+                SplitPaneView(node: second, launchClaude: launchClaude, generation: generation, customCommand: customCommand, sessionStore: sessionStore)
             }
         }
     }

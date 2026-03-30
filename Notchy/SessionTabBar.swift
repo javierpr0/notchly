@@ -205,6 +205,18 @@ struct SessionTab: View {
                         .foregroundColor(.white.opacity(foregroundOpacity))
                 }
             }
+
+            if isHovering {
+                Button(action: onClose) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 7, weight: .bold))
+                        .foregroundColor(.white.opacity(0.5))
+                        .frame(width: 12, height: 12)
+                        .background(Color.white.opacity(0.1))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+            }
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 5)

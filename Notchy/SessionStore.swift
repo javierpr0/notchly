@@ -189,6 +189,19 @@ class SessionStore {
         persistSessions()
     }
 
+    func createClaudeSession(command: String) {
+        let dir = activeSession?.workingDirectory ?? NSHomeDirectory()
+        let session = TerminalSession(
+            projectName: "Claude",
+            workingDirectory: dir,
+            started: true,
+            customCommand: command
+        )
+        sessions.append(session)
+        activeSessionId = session.id
+        persistSessions()
+    }
+
     func renameSession(_ id: UUID, to newName: String) {
         guard let index = sessions.firstIndex(where: { $0.id == id }) else { return }
         sessions[index].projectName = newName

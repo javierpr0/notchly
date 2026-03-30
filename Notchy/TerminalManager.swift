@@ -234,7 +234,7 @@ class TerminalManager: NSObject, LocalProcessTerminalViewDelegate {
 
     private var terminals: [UUID: LocalProcessTerminalView] = [:]
 
-    func terminal(for sessionId: UUID, workingDirectory: String, launchClaude: Bool = true) -> LocalProcessTerminalView {
+    func terminal(for sessionId: UUID, workingDirectory: String, launchClaude: Bool = true, customCommand: String? = nil) -> LocalProcessTerminalView {
         if let existing = terminals[sessionId] {
             return existing
         }
@@ -263,9 +263,10 @@ class TerminalManager: NSObject, LocalProcessTerminalViewDelegate {
         terminal.isInitializing = true
 
         let escapedDir = shellEscape(workingDirectory)
-        if let command = config?.command {
-            let escapedCmd = command
-            terminal.send(txt: "cd \(escapedDir) && clear && \(escapedCmd)\r")
+        if let cmd = customCommand {
+            terminal.send(txt: "cd \(escapedDir) && clear && \(cmd)\r")
+        } else if let cmd = config?.command {
+            terminal.send(txt: "cd \(escapedDir) && clear && \(cmd)\r")
         } else {
             let hasClaude = launchClaude && FileManager.default.fileExists(atPath: (workingDirectory as NSString).appendingPathComponent("CLAUDE.md"))
             if hasClaude {
@@ -324,6 +325,11 @@ class TerminalManager: NSObject, LocalProcessTerminalViewDelegate {
         for terminal in terminals.values {
             terminal.font = font
         }
+    }
+
+    func sendCommand(to paneId: UUID, command: String) {
+        guard let terminal = terminals[paneId] else { return }
+        terminal.send(txt: "\(command)\r")
     }
 
     func focusTerminal(for paneId: UUID) {

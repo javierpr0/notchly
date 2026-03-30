@@ -41,7 +41,10 @@ struct TerminalSession: Identifiable {
         return .idle
     }
 
-    init(projectName: String, projectPath: String? = nil, workingDirectory: String? = nil, started: Bool = false) {
+    /// Custom command to run instead of auto-detecting claude
+    var customCommand: String?
+
+    init(projectName: String, projectPath: String? = nil, workingDirectory: String? = nil, started: Bool = false, customCommand: String? = nil) {
         self.id = UUID()
         self.projectName = projectName
         self.projectPath = projectPath
@@ -51,6 +54,7 @@ struct TerminalSession: Identifiable {
         self.generation = 0
         self.hasBeenSelected = started
         self.createdAt = Date()
+        self.customCommand = customCommand
 
         let paneId = UUID()
         self.splitRoot = .pane(id: paneId, workingDirectory: dir)
