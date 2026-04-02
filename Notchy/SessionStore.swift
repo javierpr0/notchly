@@ -412,8 +412,10 @@ class SessionStore {
         if let session = sessions.first(where: { $0.id == id }) {
             for paneId in session.splitRoot.allPaneIds {
                 TerminalManager.shared.destroyTerminal(for: paneId)
+                SessionHistoryManager.shared.deleteHistory(for: paneId)
             }
         }
+        SessionHistoryManager.shared.deleteHistory(for: id)
         sessions.removeAll { $0.id == id }
         if activeSessionId == id {
             activeSessionId = sessions.first?.id

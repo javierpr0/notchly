@@ -38,6 +38,7 @@ struct PanelContentView: View {
     @State private var showClaudeMenu = false
     @State private var claudeUseChrome = false
     @State private var claudeSkipPermissions = false
+    @State private var selectedThemeId = TerminalManager.shared.currentThemeId
 
     private var foregroundOpacity: Double {
         sessionStore.isWindowFocused ? 1.0 : 0.6
@@ -303,6 +304,42 @@ struct PanelContentView: View {
             .controlSize(.mini)
             .padding(.horizontal, 12)
             .padding(.vertical, 4)
+
+            Divider().padding(.vertical, 4)
+
+            Text("Theme")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundColor(.secondary)
+                .padding(.horizontal, 12)
+
+            ForEach(TerminalTheme.allThemes) { theme in
+                Button {
+                    TerminalManager.shared.setTheme(theme.id)
+                    selectedThemeId = theme.id
+                } label: {
+                    HStack(spacing: 8) {
+                        RoundedRectangle(cornerRadius: 3)
+                            .fill(Color(nsColor: theme.background))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 3)
+                                    .stroke(Color(nsColor: theme.foreground), lineWidth: 1)
+                            )
+                            .frame(width: 16, height: 16)
+                        Text(theme.name)
+                            .font(.system(size: 12))
+                        Spacer()
+                        if theme.id == selectedThemeId {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundColor(.accentColor)
+                        }
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 2)
+            }
         }
         .padding(.vertical, 8)
         .frame(width: 220)

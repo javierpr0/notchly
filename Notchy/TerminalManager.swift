@@ -146,9 +146,31 @@ class ClickThroughTerminalView: LocalProcessTerminalView {
         guard let items = sender.draggingPasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL] else {
             return false
         }
-        let paths = items.map { "'" + $0.path.replacingOccurrences(of: "'", with: "'\\''") + "'" }.joined(separator: " ")
-        send(txt: paths)
+        if isRunningClaudeCode() {
+            let paths = items.map { "@" + $0.path.replacingOccurrences(of: " ", with: "\\ ") }.joined(separator: " ")
+            send(txt: paths)
+        } else {
+            let paths = items.map { "'" + $0.path.replacingOccurrences(of: "'", with: "'\\''") + "'" }.joined(separator: " ")
+            send(txt: paths)
+        }
         return true
+    }
+
+    private func isRunningClaudeCode() -> Bool {
+        let terminal = getTerminal()
+        let startRow = max(0, terminal.rows - 5)
+        for row in startRow..<terminal.rows {
+            var line = ""
+            for col in 0..<terminal.cols {
+                let ch = terminal.getCharacter(col: col, row: row) ?? " "
+                line.append(ch == "\u{0}" ? " " : ch)
+            }
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            if trimmed.contains("\u{276F}") { return true }
+            if Self.hasTokenCounterLine(trimmed) { return true }
+            if trimmed.contains("Esc to cancel") || trimmed.contains("esc to interrupt") { return true }
+        }
+        return false
     }
 
     /// Returns all visible lines from the terminal buffer.
@@ -198,6 +220,13 @@ class ClickThroughTerminalView: LocalProcessTerminalView {
         super.dataReceived(slice: slice)
 
         guard let id = sessionId else { return }
+
+        // Log raw terminal output for session history
+        if !isInitializing {
+            if let text = String(bytes: slice, encoding: .utf8), !text.isEmpty {
+                SessionHistoryManager.shared.appendText(text, for: id)
+            }
+        }
 
         // Reveal terminal after shell init + clear completes
         if isInitializing {
@@ -614,6 +643,7 @@ class TerminalManager: NSObject, LocalProcessTerminalViewDelegate {
     static let shared = TerminalManager()
 
     private static let fontSizeKey = "terminalFontSize"
+    private static let themeKey = "terminalTheme"
     private static let defaultFontSize: CGFloat = 11
     private static let minFontSize: CGFloat = 9
     private static let maxFontSize: CGFloat = 24
@@ -636,8 +666,7 @@ class TerminalManager: NSObject, LocalProcessTerminalViewDelegate {
         terminal.setWorkingDirectory(workingDirectory)
 
         terminal.font = NSFont.monospacedSystemFont(ofSize: fontSize, weight: .regular)
-        terminal.nativeBackgroundColor = NSColor(white: 0.1, alpha: 1.0)
-        terminal.nativeForegroundColor = NSColor(white: 0.9, alpha: 1.0)
+        applyTheme(to: terminal)
 
         let config = ProjectConfig.load(from: workingDirectory)
         let shell = config?.shell ?? ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh"
@@ -749,5 +778,37 @@ class TerminalManager: NSObject, LocalProcessTerminalViewDelegate {
 
     private func shellEscape(_ path: String) -> String {
         "'" + path.replacingOccurrences(of: "'", with: "'\\''") + "'"
+    }
+
+    // MARK: - Theme
+
+    var currentThemeId: String {
+        UserDefaults.standard.string(forKey: Self.themeKey) ?? "default"
+    }
+
+    var currentTheme: TerminalTheme {
+        TerminalTheme.theme(forId: currentThemeId)
+    }
+
+    private func applyTheme(to terminal: LocalProcessTerminalView) {
+        let theme = currentTheme
+        terminal.nativeBackgroundColor = theme.background
+        terminal.nativeForegroundColor = theme.foreground
+        terminal.caretColor = theme.cursor
+        terminal.selectedTextBackgroundColor = theme.selection
+        terminal.installColors(theme.swiftTermColors())
+    }
+
+    func setTheme(_ themeId: String) {
+        UserDefaults.standard.set(themeId, forKey: Self.themeKey)
+        let theme = TerminalTheme.theme(forId: themeId)
+        for terminal in terminals.values {
+            terminal.nativeBackgroundColor = theme.background
+            terminal.nativeForegroundColor = theme.foreground
+            terminal.caretColor = theme.cursor
+            terminal.selectedTextBackgroundColor = theme.selection
+            terminal.installColors(theme.swiftTermColors())
+            terminal.setNeedsDisplay(terminal.bounds)
+        }
     }
 }

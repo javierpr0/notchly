@@ -153,6 +153,11 @@ struct SessionTab: View {
         renameText = name
     }
 
+    private func showHistory() {
+        let panel = HistoryViewerPanel(sessionName: session.projectName, sessionId: session.id)
+        panel.makeKeyAndOrderFront(nil)
+    }
+
     private func refreshLatestCheckpoint() {
         guard let dir = session.projectPath else { return }
         let projectDir = (dir as NSString).deletingLastPathComponent
@@ -265,6 +270,10 @@ struct SessionTab: View {
             }
 
             Divider()
+
+            Button("Session History") {
+                showHistory()
+            }
 
             Button("Rename Tab") {
                 startRename()
