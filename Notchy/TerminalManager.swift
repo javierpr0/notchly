@@ -18,7 +18,13 @@ class ClickThroughTerminalView: LocalProcessTerminalView {
     private var currentGhostSuggestion: String?
     private static let promptCharacters: Set<Character> = ["$", "%", ">"]
 
+    private var mouseUpMonitor: Any?
+
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
+    func requestOpenLink(source: TerminalView, link: String, params: [String: String]) {
+        // no-op: prevent SwiftTerm from auto-opening URLs in the browser
+    }
 
     override init(frame: NSRect) {
         super.init(frame: frame)
@@ -26,6 +32,7 @@ class ClickThroughTerminalView: LocalProcessTerminalView {
         installArrowKeyMonitor()
         installClickMonitor()
         installRightClickMonitor()
+        installMouseUpMonitor()
     }
 
     required init?(coder: NSCoder) {
@@ -34,6 +41,7 @@ class ClickThroughTerminalView: LocalProcessTerminalView {
         installArrowKeyMonitor()
         installClickMonitor()
         installRightClickMonitor()
+        installMouseUpMonitor()
     }
 
     deinit {
@@ -44,6 +52,9 @@ class ClickThroughTerminalView: LocalProcessTerminalView {
             NSEvent.removeMonitor(monitor)
         }
         if let monitor = rightClickMonitor {
+            NSEvent.removeMonitor(monitor)
+        }
+        if let monitor = mouseUpMonitor {
             NSEvent.removeMonitor(monitor)
         }
     }
@@ -504,6 +515,23 @@ class ClickThroughTerminalView: LocalProcessTerminalView {
         }
         guard !lines.isEmpty else { return nil }
         return lines.joined(separator: "\n")
+    }
+
+    private func installMouseUpMonitor() {
+        mouseUpMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseUp) { [weak self] event in
+            guard let self,
+                  let eventWindow = event.window,
+                  eventWindow === self.window else { return event }
+            let locationInView = self.convert(event.locationInWindow, from: nil)
+            guard self.bounds.contains(locationInView) else { return event }
+
+            DispatchQueue.main.async { [weak self] in
+                guard let self, let text = self.getSelection(), !text.isEmpty else { return }
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(text, forType: .string)
+            }
+            return event
+        }
     }
 
     private func installRightClickMonitor() {
