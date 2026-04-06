@@ -73,7 +73,10 @@ jobs:
             echo "SPARKLE_PRIVATE_KEY secret is not set"
             exit 1
           fi
-          SIGNATURE_LINE=$("${{ steps.sparkle.outputs.sign_update }}" -s "$SPARKLE_PRIVATE_KEY" Notchly.dmg)
+          KEY_FILE=$(mktemp)
+          echo "$SPARKLE_PRIVATE_KEY" > "$KEY_FILE"
+          SIGNATURE_LINE=$("${{ steps.sparkle.outputs.sign_update }}" -f "$KEY_FILE" Notchly.dmg)
+          rm -f "$KEY_FILE"
           echo "signature_line=$SIGNATURE_LINE" >> $GITHUB_OUTPUT
           FILE_SIZE=$(stat -f%z Notchly.dmg)
           echo "file_size=$FILE_SIZE" >> $GITHUB_OUTPUT
