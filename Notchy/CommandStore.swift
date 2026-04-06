@@ -47,6 +47,16 @@ class CommandStore {
         }
     }
 
+    func deleteCommand(_ command: String, in directory: String) {
+        queue.async { [weak self] in
+            guard let self else { return }
+            var cmds = self._commands(for: directory)
+            cmds.removeAll { $0.text == command }
+            self.cache[directory] = cmds
+            self.saveCommands(cmds, for: directory)
+        }
+    }
+
     func importHistoryIfNeeded(for directory: String) {
         queue.async { [weak self] in
             guard let self else { return }

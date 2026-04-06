@@ -31,6 +31,7 @@ class SessionStore {
     var isTerminalExpanded = true
     var isWindowFocused = true
     var isShowingDialog = false
+    var showCommandPalette = false
 
     /// The most recent checkpoint for the active session, used to show the undo button
     var lastCheckpoint: Checkpoint?
@@ -44,6 +45,9 @@ class SessionStore {
 
     /// Activity token to prevent macOS idle sleep while Claude is working
     private var sleepActivity: NSObjectProtocol?
+
+    /// Completion info from terminal status detection (populated by TerminalManager)
+    var paneCompletionInfo: [UUID: PaneCompletionInfo] = [:]
 
     /// Sound playback
     private var activePlayers: [AVAudioPlayer] = []
@@ -243,15 +247,25 @@ class SessionStore {
             let sessionName = sessions[index].projectName
             if newAggregate == .waitingForInput && previousAggregate != .waitingForInput {
                 playSound(named: "waitingForInput")
-                sendNotification(title: "Action Required", body: "\(sessionName) needs your input")
+                sendNotification(title: L10n.shared.actionRequired, body: L10n.shared.needsInput(sessionName))
                 if isPinned && !isTerminalExpanded && sessionId == activeSessionId {
                     isTerminalExpanded = true
                     NotificationCenter.default.post(name: .NotchyExpandPanel, object: nil)
                 }
             }
             else if newAggregate == .taskCompleted && previousAggregate != .taskCompleted {
+                let info = paneCompletionInfo[paneId]
+                let hadError = info?.hadError ?? false
+                let title = hadError ? L10n.shared.taskFailed : L10n.shared.taskCompleted
+                let body: String
+                if let summary = info?.summary {
+                    body = "\(sessionName): \(summary)"
+                } else {
+                    body = L10n.shared.sessionFinished(sessionName)
+                }
                 playSound(named: "taskCompleted")
-                sendNotification(title: "Task Completed", body: "\(sessionName) finished")
+                sendNotification(title: title, body: body)
+                paneCompletionInfo.removeValue(forKey: paneId)
             }
             NotificationCenter.default.post(name: .NotchyNotchStatusChanged, object: nil)
         }

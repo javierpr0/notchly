@@ -245,12 +245,12 @@ struct SessionTab: View {
         .onTapGesture(perform: onSelect)
         .contextMenu {
             if session.projectPath != nil {
-                Button("Save Checkpoint") {
+                Button(L10n.shared.saveCheckpoint) {
                     SessionStore.shared.createCheckpoint(for: session.id)
                 }
 
                 if latestCheckpoint != nil {
-                    Button("Restore Last Checkpoint") {
+                    Button(L10n.shared.restoreLastCheckpointMenu) {
                         showRestoreConfirmation = true
                     }
                 }
@@ -259,31 +259,31 @@ struct SessionTab: View {
             }
 
             if canMoveLeft {
-                Button("Move Left") {
+                Button(L10n.shared.moveLeft) {
                     onMoveLeft?()
                 }
             }
             if canMoveRight {
-                Button("Move Right") {
+                Button(L10n.shared.moveRight) {
                     onMoveRight?()
                 }
             }
 
             Divider()
 
-            Button("Session History") {
+            Button(L10n.shared.sessionHistory) {
                 showHistory()
             }
 
-            Button("Rename Tab") {
+            Button(L10n.shared.renameTab) {
                 startRename()
             }
 
-            Button("Restart") {
+            Button(L10n.shared.restart) {
                 SessionStore.shared.restartSession(session.id)
             }
 
-            Button("Close", role: .destructive) {
+            Button(L10n.shared.close, role: .destructive) {
                 onClose()
             }
         }
@@ -295,17 +295,17 @@ struct SessionTab: View {
                 refreshLatestCheckpoint()
             }
         }
-        .alert("Restore Last Checkpoint", isPresented: $showRestoreConfirmation) {
-            Button("Restore", role: .destructive) {
+        .alert(L10n.shared.restoreLastCheckpointMenu, isPresented: $showRestoreConfirmation) {
+            Button(L10n.shared.restore, role: .destructive) {
                 if let checkpoint = latestCheckpoint {
                     guard let dir = session.projectPath else { return }
                     let projectDir = (dir as NSString).deletingLastPathComponent
                     try? CheckpointManager.shared.restoreCheckpoint(checkpoint, to: projectDir)
                 }
             }
-            Button("Cancel", role: .cancel) {}
+            Button(L10n.shared.cancel, role: .cancel) {}
         } message: {
-            Text("This will overwrite your current working directory with the checkpoint. Are you sure?")
+            Text(L10n.shared.restoreCheckpointMessage)
         }
         .onChange(of: isRenaming) {
             SessionStore.shared.isShowingDialog = isRenaming || showRestoreConfirmation

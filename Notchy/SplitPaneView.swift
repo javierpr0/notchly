@@ -114,13 +114,13 @@ struct PaneControlsView: View {
 
     var body: some View {
         HStack(spacing: 2) {
-            controlButton(icon: "square.split.2x1", help: "Split Right (⌘D)") {
+            controlButton(icon: "square.split.2x1", help: L10n.shared.splitRight) {
                 sessionStore.splitFocusedPane(direction: .horizontal)
             }
-            controlButton(icon: "square.split.1x2", help: "Split Down (⇧⌘D)") {
+            controlButton(icon: "square.split.1x2", help: L10n.shared.splitDown) {
                 sessionStore.splitFocusedPane(direction: .vertical)
             }
-            controlButton(icon: "xmark", help: "Close Pane (⇧⌘W)") {
+            controlButton(icon: "xmark", help: L10n.shared.closePane) {
                 sessionStore.closeFocusedPane()
             }
         }

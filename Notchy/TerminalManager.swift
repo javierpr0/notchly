@@ -1,6 +1,11 @@
 import AppKit
 import SwiftTerm
 
+struct PaneCompletionInfo {
+    let summary: String
+    let hadError: Bool
+}
+
 class ClickThroughTerminalView: LocalProcessTerminalView {
     var sessionId: UUID?
     private var keyMonitor: Any?
@@ -19,6 +24,7 @@ class ClickThroughTerminalView: LocalProcessTerminalView {
     private static let promptCharacters: Set<Character> = ["$", "%", ">"]
 
     private var mouseUpMonitor: Any?
+    private(set) lazy var searchController = TerminalSearchController()
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
@@ -253,6 +259,10 @@ class ClickThroughTerminalView: LocalProcessTerminalView {
         triggerAutocomplete()
     }
 
+    private static let errorPatterns: [String] = ["error:", "failed", "permission denied"]
+    private static let errorSymbols: Set<Character> = ["\u{2717}", "\u{2718}"]
+    private static let successSymbols: Set<Character> = ["\u{2713}", "\u{2714}"]
+
     private func evaluateStatus(for id: UUID) {
         guard let visibleText = extractVisibleText() else { return }
         let fullText = extractFullVisibleText() ?? visibleText
@@ -263,18 +273,46 @@ class ClickThroughTerminalView: LocalProcessTerminalView {
             newStatus = .working
         }
         else if fullText.contains("Esc to cancel") {
-            // Claude needs a decision (tool permission, file edit, etc.)
             newStatus = .waitingForInput
         } else if visibleText.contains("Interrupted") {
             newStatus = .interrupted
         } else {
-            // Includes Claude's ❯ prompt (task finished) and shell prompt
             newStatus = .idle
         }
 
+        let summary: String? = (newStatus == .idle) ? Self.extractSummary(from: visibleText) : nil
+        let hadError: Bool = (newStatus == .idle) ? Self.detectError(in: visibleText) : false
+
         Task { @MainActor in
+            if let summary {
+                SessionStore.shared.paneCompletionInfo[id] = PaneCompletionInfo(summary: summary, hadError: hadError)
+            }
             SessionStore.shared.updateTerminalStatus(id, status: newStatus)
         }
+    }
+
+    private static func extractSummary(from text: String) -> String? {
+        let separator = "\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}"
+        let lines = text.components(separatedBy: "\n")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty && !$0.hasPrefix(separator) }
+        guard let last = lines.last else { return nil }
+        return String(last.prefix(100))
+    }
+
+    private static func detectError(in text: String) -> Bool {
+        let lines = text.components(separatedBy: "\n")
+        for line in lines {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            let lower = trimmed.lowercased()
+            for pattern in errorPatterns {
+                if lower.contains(pattern) { return true }
+            }
+            if let first = trimmed.first {
+                if errorSymbols.contains(first) { return true }
+            }
+        }
+        return false
     }
 
     /// Checks whether the text contains a Claude spinner character (visible during working state)
@@ -590,13 +628,13 @@ class ClickThroughTerminalView: LocalProcessTerminalView {
 
         if let block = findCommandBlock(at: absoluteRow),
            let outputText = extractOutputText(from: block) {
-            let copyOutput = NSMenuItem(title: "Copy Output", action: #selector(copyBlockOutput(_:)), keyEquivalent: "")
+            let copyOutput = NSMenuItem(title: L10n.shared.copyOutput, action: #selector(copyBlockOutput(_:)), keyEquivalent: "")
             copyOutput.representedObject = outputText
             copyOutput.target = self
             menu.addItem(copyOutput)
 
             if let cmdLine = readBufferLine(absoluteRow: block.promptRow) {
-                let copyCmd = NSMenuItem(title: "Copy Command", action: #selector(copyBlockOutput(_:)), keyEquivalent: "")
+                let copyCmd = NSMenuItem(title: L10n.shared.copyCommand, action: #selector(copyBlockOutput(_:)), keyEquivalent: "")
                 let trimmed = cmdLine.trimmingCharacters(in: .whitespaces)
                 var cmdText = trimmed
                 for (index, char) in trimmed.enumerated() {
@@ -616,7 +654,7 @@ class ClickThroughTerminalView: LocalProcessTerminalView {
             menu.addItem(.separator())
         }
 
-        let paste = NSMenuItem(title: "Paste", action: #selector(pasteFromClipboard), keyEquivalent: "")
+        let paste = NSMenuItem(title: L10n.shared.paste, action: #selector(pasteFromClipboard), keyEquivalent: "")
         paste.target = self
         menu.addItem(paste)
 
@@ -653,7 +691,7 @@ class TerminalManager: NSObject, LocalProcessTerminalViewDelegate {
         return saved > 0 ? saved : Self.defaultFontSize
     }
 
-    private var terminals: [UUID: LocalProcessTerminalView] = [:]
+    private(set) var terminals: [UUID: LocalProcessTerminalView] = [:]
 
     func terminal(for sessionId: UUID, workingDirectory: String, launchClaude: Bool = true, customCommand: String? = nil) -> LocalProcessTerminalView {
         if let existing = terminals[sessionId] {

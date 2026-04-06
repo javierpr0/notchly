@@ -211,7 +211,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
 
         let notchItem = NSMenuItem(
-            title: "Show in notch...",
+            title: L10n.shared.showInNotch,
             action: #selector(toggleReplaceNotch),
             keyEquivalent: ""
         )
@@ -236,7 +236,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         let newItem = NSMenuItem(
-            title: "New Session",
+            title: L10n.shared.newSession,
             action: #selector(createNewSession),
             keyEquivalent: "n"
         )
@@ -249,12 +249,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if !eligibleSessions.isEmpty {
             menu.addItem(.separator())
 
-            let headingItem = NSMenuItem(title: "Checkpoint", action: nil, keyEquivalent: "")
+            let headingItem = NSMenuItem(title: L10n.shared.checkpoint, action: nil, keyEquivalent: "")
             headingItem.isEnabled = false
             menu.addItem(headingItem)
 
             let saveItem = NSMenuItem(
-                title: "Save...",
+                title: L10n.shared.save,
                 action: nil,
                 keyEquivalent: ""
             )
@@ -279,7 +279,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             menu.addItem(saveItem)
 
             let restoreItem = NSMenuItem(
-                title: "Restore from…",
+                title: L10n.shared.restoreFrom,
                 action: nil,
                 keyEquivalent: ""
             )
@@ -307,7 +307,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(.separator())
 
         let updateItem = NSMenuItem(
-            title: "Check for Updates…",
+            title: L10n.shared.checkForUpdates,
             action: #selector(checkForUpdates),
             keyEquivalent: ""
         )
@@ -318,7 +318,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(.separator())
 
         let quitItem = NSMenuItem(
-            title: "Quit Notchly",
+            title: L10n.shared.quitNotchly,
             action: #selector(NSApplication.terminate(_:)),
             keyEquivalent: "q"
         )
