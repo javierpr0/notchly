@@ -8,7 +8,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var panel: TerminalPanel = TerminalPanel(sessionStore: sessionStore)
     private var notchWindow: NotchWindow?
     private let sessionStore = SessionStore.shared
-    private let updaterController = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
+    private var updaterController: SPUStandardUpdaterController?
     private var hoverHideTimer: Timer?
     private var hoverGlobalMonitor: Any?
     private var hoverLocalMonitor: Any?
@@ -45,6 +45,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             setupNotchWindow()
         }
         setupHotkey()
+        setupUpdater()
+    }
+
+    private func setupUpdater() {
+        do {
+            let controller = SPUStandardUpdaterController(startingUpdater: false, updaterDelegate: nil, userDriverDelegate: nil)
+            try controller.updater.start()
+            updaterController = controller
+        } catch {
+            NSLog("Sparkle updater failed to start: \(error)")
+        }
     }
 
     private func setupStatusItem() {
@@ -301,7 +312,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             keyEquivalent: ""
         )
         updateItem.target = self
-        updateItem.isEnabled = updaterController.updater.canCheckForUpdates
+        updateItem.isEnabled = updaterController?.updater.canCheckForUpdates ?? false
         menu.addItem(updateItem)
 
         menu.addItem(.separator())
@@ -349,7 +360,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func checkForUpdates() {
-        updaterController.checkForUpdates(nil)
+        updaterController?.checkForUpdates(nil)
     }
 
     @objc private func createNewSession() {
