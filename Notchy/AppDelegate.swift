@@ -1,4 +1,5 @@
 import AppKit
+import Sparkle
 import SwiftUI
 
 @MainActor
@@ -7,6 +8,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var panel: TerminalPanel = TerminalPanel(sessionStore: sessionStore)
     private var notchWindow: NotchWindow?
     private let sessionStore = SessionStore.shared
+    private let updaterController = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
     private var hoverHideTimer: Timer?
     private var hoverGlobalMonitor: Any?
     private var hoverLocalMonitor: Any?
@@ -293,6 +295,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         menu.addItem(.separator())
 
+        let updateItem = NSMenuItem(
+            title: "Check for Updates…",
+            action: #selector(checkForUpdates),
+            keyEquivalent: ""
+        )
+        updateItem.target = self
+        updateItem.isEnabled = updaterController.updater.canCheckForUpdates
+        menu.addItem(updateItem)
+
+        menu.addItem(.separator())
+
         let quitItem = NSMenuItem(
             title: "Quit Notchly",
             action: #selector(NSApplication.terminate(_:)),
@@ -333,6 +346,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             notchWindow?.orderOut(nil)
             notchWindow = nil
         }
+    }
+
+    @objc private func checkForUpdates() {
+        updaterController.checkForUpdates(nil)
     }
 
     @objc private func createNewSession() {
