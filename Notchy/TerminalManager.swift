@@ -746,7 +746,9 @@ class TerminalManager: NSObject, LocalProcessTerminalViewDelegate {
     func setTerminalTitle(source: LocalProcessTerminalView, title: String) {}
 
     func requestOpenLink(source: TerminalView, link: String, params: [String: String]) {
-        // no-op: prevent auto-opening URLs
+        guard NSApp.currentEvent?.modifierFlags.contains(.command) == true,
+              let url = URL(string: link) else { return }
+        NSWorkspace.shared.open(url)
     }
 
     func hostCurrentDirectoryUpdate(source: TerminalView, directory: String?) {
