@@ -39,6 +39,31 @@ class ClickThroughTerminalView: LocalProcessTerminalView {
         installClickMonitor()
         installRightClickMonitor()
         installMouseUpMonitor()
+        installScrollMonitor()
+    }
+
+    private var scrollMonitor: Any?
+
+    func installScrollMonitor() {
+        guard scrollMonitor == nil else { return }
+        scrollMonitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { [weak self] event in
+            guard let self,
+                  self.window != nil,
+                  let eventWindow = event.window,
+                  eventWindow == self.window else { return event }
+
+            let locationInView = self.convert(event.locationInWindow, from: nil)
+            guard self.bounds.contains(locationInView) else { return event }
+
+            let terminal = self.getTerminal()
+            guard terminal.mouseMode != .off, event.deltaY != 0 else { return event }
+
+            let lines = event.deltaY > 0 ? Int(max(1, event.deltaY)) : Int(min(-1, event.deltaY))
+            let count = abs(lines)
+            let arrow = lines > 0 ? "\u{1b}[A" : "\u{1b}[B"
+            self.send(txt: String(repeating: arrow, count: count))
+            return nil
+        }
     }
 
     required init?(coder: NSCoder) {
